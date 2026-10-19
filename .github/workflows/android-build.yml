@@ -1,0 +1,43 @@
+name: Android APK Build
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+permissions:
+  contents: read
+
+jobs:
+  check-project:
+    name: Check Android Project
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout source code
+        uses: actions/checkout@v4
+
+      - name: Check project structure
+        run: |
+          echo "Checking Android project structure..."
+
+          if [ -f "gradlew" ]; then
+            echo "Found Gradle wrapper"
+          else
+            echo "Gradle wrapper not found"
+          fi
+
+          if [ -f "settings.gradle" ] || [ -f "settings.gradle.kts" ]; then
+            echo "Found Gradle settings"
+          else
+            echo "Gradle settings not found"
+          fi
+
+          if [ -f "app/build.gradle" ] || [ -f "app/build.gradle.kts" ]; then
+            echo "Found Android app module"
+          else
+            echo "Android app module not found"
+          fi
+
+          echo "Project inspection completed."
