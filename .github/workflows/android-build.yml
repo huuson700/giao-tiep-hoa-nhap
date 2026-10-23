@@ -243,8 +243,10 @@ jobs:
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
 
-            - name: Install Android SDK
+      - name: Install Android SDK
         uses: android-actions/setup-android@v3
+        with:
+          packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
 
