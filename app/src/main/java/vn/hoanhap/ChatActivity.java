@@ -171,13 +171,13 @@ public class ChatActivity extends Activity {
         db.collection("invites").document(code).get().addOnSuccessListener(invite->{
             if(!invite.exists()){toast("Không tìm thấy mã mời. Hãy kiểm tra lại.");return;}
             String id=invite.getString("roomId"); if(id==null){toast("Mã mời không hợp lệ.");return;}
-            db.collection("rooms").document(id).get().addOnSuccessListener(room->{
-                if(!room.exists()){toast("Phòng này không còn tồn tại.");return;}
-                String title=room.getString("title"); if(title==null)title="Phòng trò chuyện";
-                db.collection("rooms").document(id).update("memberIds",FieldValue.arrayUnion(user.getUid()))
-                    .addOnSuccessListener(v->{toast("Đã tham gia phòng.");openRoom(id,title,code);})
-                    .addOnFailureListener(e->showError("Không tham gia được phòng",e));
-            }).addOnFailureListener(e->showError("Không đọc được phòng",e));
+            // The invite is the only document readable before joining. Add this user to membership first.
+            db.collection("rooms").document(id).update("memberIds",FieldValue.arrayUnion(user.getUid()))
+                .addOnSuccessListener(v->db.collection("rooms").document(id).get().addOnSuccessListener(room->{
+                    String title=room.getString("title"); if(title==null)title="Phòng trò chuyện";
+                    toast("Đã tham gia phòng.");openRoom(id,title,code);
+                }).addOnFailureListener(e->showError("Đã tham gia nhưng không tải được phòng",e)))
+                .addOnFailureListener(e->showError("Không tham gia được phòng",e));
         }).addOnFailureListener(e->showError("Không kiểm tra được mã mời",e));
     }
 
@@ -211,7 +211,7 @@ public class ChatActivity extends Activity {
                     LinearLayout bubble=col();bubble.setPadding(dp(10),dp(8),dp(10),dp(8));
                     boolean mine=user.getUid().equals(doc.getString("senderId"));
                     bubble.setBackground(bg(mine?Color.rgb(220,243,246):BG,14));
-                    bubble.addView(addText(bubble,(mine?"Bạn":sender)+"  "+time,12,MUTED,true));
+                    addText(bubble,(mine?"Bạn":sender)+"  "+time,12,MUTED,true);
                     addText(bubble,body,17,INK,false);
                     LinearLayout.LayoutParams bp=new LinearLayout.LayoutParams(-1,-2);bp.setMargins(0,0,0,dp(7));messages.addView(bubble,bp);
                 }
