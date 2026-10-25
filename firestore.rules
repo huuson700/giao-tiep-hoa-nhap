@@ -20,6 +20,7 @@ service cloud.firestore {
       allow get, list: if isRoomMember(resource.data);
       allow update: if signedIn()
         && resource.data.memberIds is list
+        && !resource.data.memberIds.hasAny([request.auth.uid])
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['memberIds'])
         && request.resource.data.memberIds is list
         && request.resource.data.memberIds.hasAll(resource.data.memberIds)
