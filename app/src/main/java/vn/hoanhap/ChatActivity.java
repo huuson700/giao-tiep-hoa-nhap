@@ -154,8 +154,20 @@ public class ChatActivity extends Activity {
                 Map<String,Object> invite=new HashMap<>(); invite.put("roomId",id); invite.put("createdBy",user.getUid()); invite.put("createdAt",FieldValue.serverTimestamp());
                 return db.collection("invites").document(code).set(invite);
             }).addOnSuccessListener(v->{
-                new AlertDialog.Builder(this).setTitle("Phòng đã được tạo").setMessage("Tên: "+title+"\nMã mời: "+code+"\n\nHãy chia sẻ mã này riêng tư với người muốn trò chuyện.")
-                    .setPositiveButton("Mở phòng",(di,wi)->openRoom(id,title,code)).setNegativeButton("Đóng",(di,wi)->showRooms()).show();
+                new AlertDialog.Builder(this).setTitle("Phòng đã được tạo").setMessage("Tên: "+title+"\\nMã mời: "+code+"\\n\\nChỉ chia sẻ mã này với người bạn muốn mời.")
+                    .setPositiveButton("Mở phòng",(di,wi)->openRoom(id,title,code))
+                    .setNegativeButton("Sao chép mã",(di,wi)->{
+                        android.content.ClipboardManager clipboard=(android.content.ClipboardManager)getSystemService(CLIPBOARD_SERVICE);
+                        clipboard.setPrimaryClip(android.content.ClipData.newPlainText("Mã mời phòng",code));
+                        toast("Đã sao chép mã mời.");
+                        showRooms();
+                    })
+                    .setNeutralButton("Chia sẻ mã",(di,wi)->{
+                        android.content.Intent send=new android.content.Intent(android.content.Intent.ACTION_SEND);
+                        send.setType("text/plain");send.putExtra(android.content.Intent.EXTRA_TEXT,"Mời bạn trò chuyện trên Giao Tiếp Hòa Nhập. Mã phòng: "+code);
+                        startActivity(android.content.Intent.createChooser(send,"Chia sẻ mã mời"));
+                        showRooms();
+                    }).show();
             }).addOnFailureListener(e->showError("Không tạo được phòng",e));
         }).show();
     }
