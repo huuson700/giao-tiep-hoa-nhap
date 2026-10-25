@@ -78,6 +78,9 @@ public class MainActivity extends Activity {
         LinearLayout heading=row(); heading.setGravity(Gravity.CENTER_VERTICAL);
         heading.addView(label("Lời nhắn của bạn",21,INK,true),new LinearLayout.LayoutParams(0,dp(54),1));
         Button settings=button("⚙ Cài đặt",false); settings.setOnClickListener(v->settings()); heading.addView(settings); page.addView(heading);
+        Button online = button("💬  Tin nhắn trực tuyến", true);
+        online.setOnClickListener(v -> startActivity(new Intent(this, ChatActivity.class)));
+        page.addView(online, margin(0, dp(8), 0, dp(10)));
         LinearLayout composer=col(); composer.setPadding(dp(14),dp(14),dp(14),dp(14)); composer.setBackground(bg(Color.WHITE,20));
         page.addView(composer,margin(0,dp(8),0,0));
         input=new EditText(this); input.setHint("Ví dụ: Tôi cần giúp đỡ..."); input.setTextSize(textSize);
