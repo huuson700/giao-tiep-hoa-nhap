@@ -5,257 +5,34 @@ on:
   push:
     branches:
       - main
+      - "feature/**"
 
 permissions:
-  contents: write
+  contents: read
 
 jobs:
   build-apk:
     runs-on: ubuntu-latest
-
     steps:
       - name: Checkout source
         uses: actions/checkout@v4
-
-      - name: Setup Java
+      - name: Setup Java 17
         uses: actions/setup-java@v4
         with:
           distribution: temurin
           java-version: "17"
-
-      - name: Generate Android project
-        shell: bash
-        run: |
-          set -e
-
-          mkdir -p app/src/main/java/vn/hoanhap
-
-          cat > settings.gradle.kts <<'EOF'
-          pluginManagement {
-              repositories {
-                  google()
-                  mavenCentral()
-                  gradlePluginPortal()
-              }
-          }
-          dependencyResolutionManagement {
-              repositoriesMode.set(RepositoriesMode.FAIL_ON_PROJECT_REPOS)
-              repositories {
-                  google()
-                  mavenCentral()
-              }
-          }
-          rootProject.name = "GiaoTiepHoaNhap"
-          include(":app")
-          EOF
-
-          cat > build.gradle.kts <<'EOF'
-          plugins {
-              id("com.android.application") version "8.7.3" apply false
-          }
-          EOF
-
-          cat > gradle.properties <<'EOF'
-          org.gradle.jvmargs=-Xmx2048m -Dfile.encoding=UTF-8
-          android.useAndroidX=true
-          EOF
-
-          cat > app/build.gradle.kts <<'EOF'
-          plugins {
-              id("com.android.application")
-          }
-
-          android {
-              namespace = "vn.hoanhap"
-              compileSdk = 35
-
-              defaultConfig {
-                  applicationId = "vn.hoanhap"
-                  minSdk = 23
-                  targetSdk = 35
-                  versionCode = 1
-                  versionName = "1.0"
-              }
-          }
-          EOF
-
-          cat > app/src/main/AndroidManifest.xml <<'EOF'
-          <manifest xmlns:android="http://schemas.android.com/apk/res/android">
-              <uses-permission android:name="android.permission.RECORD_AUDIO" />
-              <queries>
-                  <intent>
-                      <action android:name="android.speech.RecognitionService" />
-                  </intent>
-              </queries>
-              <application
-                  android:label="Giao Tiếp Hòa Nhập"
-                  android:theme="@android:style/Theme.Material.Light.NoActionBar">
-                  <activity
-                      android:name=".MainActivity"
-                      android:exported="true">
-                      <intent-filter>
-                          <action android:name="android.intent.action.MAIN" />
-                          <category android:name="android.intent.category.LAUNCHER" />
-                      </intent-filter>
-                  </activity>
-              </application>
-          </manifest>
-          EOF
-
-          cat > app/src/main/java/vn/hoanhap/MainActivity.java <<'EOF'
-          package vn.hoanhap;
-
-          import android.Manifest;
-          import android.app.Activity;
-          import android.content.Intent;
-          import android.content.pm.PackageManager;
-          import android.os.Bundle;
-          import android.speech.RecognizerIntent;
-          import android.speech.SpeechRecognizer;
-          import android.speech.tts.TextToSpeech;
-          import android.view.ViewGroup;
-          import android.widget.Button;
-          import android.widget.EditText;
-          import android.widget.LinearLayout;
-          import android.widget.TextView;
-          import android.widget.Toast;
-          import java.util.ArrayList;
-          import java.util.Locale;
-
-          public class MainActivity extends Activity {
-              EditText input;
-              TextView status;
-              TextToSpeech tts;
-              boolean ready = false;
-
-              @Override
-              public void onCreate(Bundle b) {
-                  super.onCreate(b);
-
-                  LinearLayout layout = new LinearLayout(this);
-                  layout.setOrientation(LinearLayout.VERTICAL);
-                  layout.setPadding(24, 32, 24, 24);
-
-                  TextView title = new TextView(this);
-                  title.setText("GIAO TIẾP HÒA NHẬP");
-                  title.setTextSize(25);
-                  layout.addView(title);
-
-                  input = new EditText(this);
-                  input.setHint("Nhập nội dung giao tiếp...");
-                  input.setTextSize(18);
-                  input.setMinLines(4);
-                  layout.addView(input);
-
-                  Button speak = new Button(this);
-                  speak.setText("ĐỌC VĂN BẢN THÀNH TIẾNG");
-                  layout.addView(speak);
-
-                  Button listen = new Button(this);
-                  listen.setText("NHẬN DIỆN GIỌNG NÓI");
-                  layout.addView(listen);
-
-                  status = new TextView(this);
-                  status.setText("Sẵn sàng giao tiếp.");
-                  layout.addView(status);
-
-                  setContentView(layout);
-
-                  tts = new TextToSpeech(this, result -> {
-                      if (result == TextToSpeech.SUCCESS) {
-                          int r = tts.setLanguage(new Locale("vi", "VN"));
-                          ready = r != TextToSpeech.LANG_MISSING_DATA
-                              && r != TextToSpeech.LANG_NOT_SUPPORTED;
-                      }
-                  });
-
-                  speak.setOnClickListener(v -> {
-                      String text = input.getText().toString().trim();
-                      if (text.isEmpty()) {
-                          input.setError("Hãy nhập nội dung cần đọc");
-                      } else if (ready) {
-                          tts.speak(text, TextToSpeech.QUEUE_FLUSH, null, "speech");
-                          status.setText("Đang đọc văn bản.");
-                      } else {
-                          status.setText("Giọng đọc tiếng Việt chưa sẵn sàng.");
-                      }
-                  });
-
-                  listen.setOnClickListener(v -> {
-                      if (checkSelfPermission(Manifest.permission.RECORD_AUDIO)
-                          != PackageManager.PERMISSION_GRANTED) {
-                          requestPermissions(
-                              new String[]{Manifest.permission.RECORD_AUDIO}, 10);
-                      } else {
-                          recognize();
-                      }
-                  });
-              }
-
-              void recognize() {
-                  if (!SpeechRecognizer.isRecognitionAvailable(this)) {
-                      status.setText("Không tìm thấy dịch vụ nhận diện giọng nói.");
-                      return;
-                  }
-
-                  Intent i = new Intent(RecognizerIntent.ACTION_RECOGNIZE_SPEECH);
-                  i.putExtra(RecognizerIntent.EXTRA_LANGUAGE_MODEL,
-                      RecognizerIntent.LANGUAGE_MODEL_FREE_FORM);
-                  i.putExtra(RecognizerIntent.EXTRA_LANGUAGE, "vi-VN");
-                  i.putExtra(RecognizerIntent.EXTRA_PROMPT, "Hãy nói...");
-                  startActivityForResult(i, 11);
-              }
-
-              @Override
-              public void onRequestPermissionsResult(
-                  int requestCode, String[] permissions, int[] results) {
-                  super.onRequestPermissionsResult(requestCode, permissions, results);
-                  if (requestCode == 10 && results.length > 0
-                      && results[0] == PackageManager.PERMISSION_GRANTED) {
-                      recognize();
-                  }
-              }
-
-              @Override
-              protected void onActivityResult(int requestCode, int resultCode, Intent data) {
-                  super.onActivityResult(requestCode, resultCode, data);
-                  if (requestCode == 11 && resultCode == RESULT_OK && data != null) {
-                      ArrayList<String> results = data.getStringArrayListExtra(
-                          RecognizerIntent.EXTRA_RESULTS);
-                      if (results != null && !results.isEmpty()) {
-                          input.setText(results.get(0));
-                          status.setText("Đã nhận diện giọng nói.");
-                      }
-                  }
-              }
-
-              @Override
-              protected void onDestroy() {
-                  if (tts != null) {
-                      tts.stop();
-                      tts.shutdown();
-                  }
-                  super.onDestroy();
-              }
-          }
-          EOF
-
       - name: Setup Gradle
         uses: gradle/actions/setup-gradle@v4
-
       - name: Install Android SDK
         uses: android-actions/setup-android@v3
         with:
           packages: 'platform-tools platforms;android-35 build-tools;35.0.0'
-
-      - name: Install Gradle distribution
+      - name: Create Gradle wrapper
         run: |
           gradle wrapper --gradle-version 8.9
           chmod +x gradlew
-
-      - name: Build APK
+      - name: Build debug APK
         run: ./gradlew --no-daemon assembleDebug
-
       - name: Upload APK
         uses: actions/upload-artifact@v4
         with:
