@@ -27,7 +27,7 @@
 **Bảo mật và quyền riêng tư**
 - Không tải lên, chia sẻ hoặc nhúng service-account key vào ứng dụng Android.
 - Firebase API key không phải mật khẩu; bảo mật thực tế dựa vào Authentication và Firestore Security Rules.
-- Mã mời cho phép người có mã yêu cầu tham gia phòng; chỉ chia sẻ với người tin tưởng.
+- Mã mời cho phép người có mã tự tham gia phòng; chỉ chia sẻ với người tin tưởng.
 - Bản đầu giới hạn 50 thành viên mỗi phòng và 1.000 ký tự mỗi tin nhắn.
 - Tài khoản Firebase và dữ liệu Firestore thuộc project do người triển khai quản lý. Hãy cấu hình ngân sách/giám sát và chính sách lưu trữ trước khi phát hành rộng rãi.
 - Chưa hỗ trợ mã hóa đầu-cuối (E2EE), gửi ảnh/tệp, thông báo đẩy hoặc quản trị/xóa tài khoản từ trong ứng dụng. Không dùng phiên bản này để gửi thông tin đặc biệt nhạy cảm.
