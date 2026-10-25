@@ -146,7 +146,7 @@ public class ChatActivity extends Activity {
     private void createRoom() {
         EditText name=field("Tên phòng (ví dụ: Gia đình)",false);
         new AlertDialog.Builder(this).setTitle("Tạo phòng mới").setView(name).setNegativeButton("Hủy",null).setPositiveButton("Tạo",(d,w)->{
-            String title=name.getText().toString().trim(); if(title.isEmpty())title="Phòng trò chuyện";
+            String enteredTitle=name.getText().toString().trim(); final String title=enteredTitle.isEmpty()?"Phòng trò chuyện":enteredTitle;
             String id=db.collection("rooms").document().getId(), code=makeCode();
             Map<String,Object> room=new HashMap<>(); room.put("title",title); room.put("ownerId",user.getUid()); room.put("memberIds",Arrays.asList(user.getUid())); room.put("createdAt",FieldValue.serverTimestamp());
             db.collection("rooms").document(id).set(room).continueWithTask(task->{
